@@ -5,7 +5,10 @@ project(simple_sdl)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
 
-add_subdirectory(vendored/SDL EXCLUDE_FROM_ALL) # SDL in vendored/
+add_subdirectory(vendored/SDL EXCLUDE_FROM_ALL)         # SDL
+add_subdirectory(vendored/SDL_image EXCLUDE_FROM_ALL)   # SDL_image
 
-add_executable(simple_sdl entry.c)
-target_link_libraries(simple_sdl PRIVATE SDL3::SDL3)
+include_directories(include/)
+
+add_executable(simple_sdl entry.c lib/Entity.c lib/Vector.c)
+target_link_libraries(simple_sdl PRIVATE SDL3::SDL3 SDL3_image::SDL3_image)
