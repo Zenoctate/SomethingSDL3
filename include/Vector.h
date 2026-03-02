@@ -2,8 +2,8 @@
 #define VECTOR
 
 typedef struct {
-    float x;
-    float y;
+    double x;
+    double y;
 } Vector2D;
 
 #endif

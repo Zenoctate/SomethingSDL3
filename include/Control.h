@@ -1,6 +1,8 @@
 #ifndef CONTROL
 #define CONTROL
 
+#include <stdbool.h>
+
 typedef struct {
     bool up;
     bool down;
