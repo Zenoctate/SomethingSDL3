@@ -23,6 +23,7 @@ typedef struct {
     Vector2D pos;
     Vector2D vel;
     double rotation;
+    double mass;
 
     Vector2D square_hitbox_cornerpos;    // Square hitbox
     Vector2D hitbox_dimensions;
@@ -30,6 +31,6 @@ typedef struct {
 
 void Entity_Tick(Entity *entity, double delta_time);
 bool Check_Collision(Entity *e1, Entity *e2);
-bool Bounce_Collision(Entity *e1, Entity *e2, double factor);
+bool Physics_Collision(Entity *e1, Entity *e2, double factor);
 
 #endif

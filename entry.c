@@ -11,7 +11,7 @@
 #define INIT_BACKCOLOR 0x000000ff
 
 #define SQRT2 1.4142135623730951
-#define BYSQRT2 1 / 1.4142135623730951
+#define BYSQRT2 (1 / SQRT2)
 
 #define ENTITY_LIMIT 500
 #define PLAYABLE_WIDTH 1400
@@ -25,6 +25,7 @@ SDL_Event main_event;
 Vector2D camera = {0};
 Entity player;
 Entity opponent_test;
+Entity opponent_test2;
 Player_Input player_input;
 
 bool MySDL_SetDrawHexColor(int hexcode);
@@ -93,23 +94,38 @@ bool Init_FirstTick() {
     player.pos.x = 0;
     player.pos.y = 0;
     player.rotation = 0;
+    player.mass = 30;
 
     player.type = PLAYER;
 
-    player.square_hitbox_cornerpos.x = -10;
-    player.square_hitbox_cornerpos.y = -10;
-    player.hitbox_dimensions.x = 20;
-    player.hitbox_dimensions.y = 20;
+    player.square_hitbox_cornerpos.x = -15;
+    player.square_hitbox_cornerpos.y = -15;
+    player.hitbox_dimensions.x = 30;
+    player.hitbox_dimensions.y = 30;
 
     opponent_test.pos.x = 40;
     opponent_test.pos.y = 0;
     opponent_test.vel.x = 0;
     opponent_test.vel.y = 0;
+    opponent_test.mass = 10;
 
     opponent_test.square_hitbox_cornerpos.x = -10;
     opponent_test.square_hitbox_cornerpos.y = -10;
     opponent_test.hitbox_dimensions.x = 20;
     opponent_test.hitbox_dimensions.y = 20;
+
+    opponent_test2.pos.x = -40;
+    opponent_test2.pos.y = 0;
+    opponent_test2.vel.x = 0;
+    opponent_test2.vel.y = 0;
+    opponent_test2.mass = 10;
+
+    opponent_test2.square_hitbox_cornerpos.x = -10;
+    opponent_test2.square_hitbox_cornerpos.y = -10;
+    opponent_test2.hitbox_dimensions.x = 20;
+    opponent_test2.hitbox_dimensions.y = 20;
+
+    opponent_test.type = STATIC;
 
     return true;
 }
@@ -190,9 +206,17 @@ bool Game_Tick() {
 
     Entity_Tick(&player, delta_time);
     // ##############################################
-
-    if(Bounce_Collision(&player, &opponent_test, 0.5)) {
+    
+    Entity_Tick(&opponent_test, delta_time);
+    Entity_Tick(&opponent_test2, delta_time);
+    if(Physics_Collision(&player, &opponent_test, 0.5)) {
         SDL_Log("Collision Tested!");
+    }
+    if(Physics_Collision(&opponent_test2, &opponent_test, 0.5)) {
+        SDL_Log("Collision-Collision Tested!");
+    }
+    if(Physics_Collision(&player, &opponent_test2, 0.5)) {
+        SDL_Log("Collision2 Tested!");
     }
     LimitPos(&camera, player.pos.x - 100, player.pos.y - 100, player.pos.x + 100, player.pos.y + 100);
 
@@ -205,18 +229,28 @@ bool Game_Draw() {
 
     // PLAYER #######################################
     ToOnScreenCoordinate(&onScreen, &player.pos, &camera);
-    rect.x = onScreen.x - 10;
-    rect.y = onScreen.y - 10;
-    rect.w = 20;
-    rect.h = 20;
+    rect.x = onScreen.x - 14.5;
+    rect.y = onScreen.y - 14.5;
+    rect.w = 30;
+    rect.h = 30;
     MySDL_SetDrawHexColor(0x00ffffff);
     SDL_RenderFillRect(main_renderer, &rect);
     // ##############################################
 
     // OPPONENT_TEST ################################
     ToOnScreenCoordinate(&onScreen, &opponent_test.pos, &camera);
-    rect.x = onScreen.x - 10;
-    rect.y = onScreen.y - 10;
+    rect.x = onScreen.x - 9.5;
+    rect.y = onScreen.y - 9.5;
+    rect.w = 20;
+    rect.h = 20;
+    MySDL_SetDrawHexColor(0x0000ffff);
+    SDL_RenderFillRect(main_renderer, &rect);
+    // ##############################################
+
+    // OPPONENT_TEST2 ################################
+    ToOnScreenCoordinate(&onScreen, &opponent_test2.pos, &camera);
+    rect.x = onScreen.x - 9.5;
+    rect.y = onScreen.y - 9.5;
     rect.w = 20;
     rect.h = 20;
     MySDL_SetDrawHexColor(0x0000ffff);
@@ -227,8 +261,8 @@ bool Game_Draw() {
     tmpvec.x = (-PLAYABLE_WIDTH / 2);
     tmpvec.y = (PLAYABLE_HEIGHT / 2);
     ToOnScreenCoordinate(&onScreen, &tmpvec, &camera);
-    rect.x = onScreen.x;
-    rect.y = onScreen.y;
+    rect.x = onScreen.x + 0.5;
+    rect.y = onScreen.y + 0.5;
     rect.w = PLAYABLE_WIDTH;
     rect.h = PLAYABLE_HEIGHT;
     MySDL_SetDrawHexColor(0xffffffff);
