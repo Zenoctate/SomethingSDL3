@@ -4,6 +4,7 @@
 #include "Entity.h"
 #include "Control.h"
 #include "Vector.h"
+#include "Collisions.h"
 
 #define MAIN_TITLE "SDL Game"
 #define INIT_WIDTH 960
@@ -23,18 +24,19 @@ SDL_Renderer *main_renderer;
 SDL_Event main_event;
 
 Vector2D camera = {0};
-Entity player;
-Entity opponent_test;
-Entity opponent_test2;
 Player_Input player_input;
 
-bool MySDL_SetDrawHexColor(int hexcode);
-void ToOnScreenCoordinate(Vector2D *out, Vector2D *ingame, Vector2D *camera);
-void LimitPos(Vector2D *vec, int Xmin, int Ymin, int Xmax, int Ymax);
+int num_entities = 0;
+Entity entities[ENTITY_LIMIT];
+#define PLAYER_ENTITY entities[0]           // First entity is always the PLAYER_ENTITY
 
 bool is_running = false;
 double do_frame_delta = 0.008;              // For consistent frame rate (set 0 to remove function)
 double delta_time = 0;                      // Time between game ticks
+
+bool MySDL_SetDrawHexColor(int hexcode);
+void ToOnScreenCoordinate(Vector2D *out, Vector2D *ingame, Vector2D *camera);
+void LimitPos(Vector2D *vec, int Xmin, int Ymin, int Xmax, int Ymax);
 
 bool Init_Game();
 bool Init_FirstTick();
@@ -91,41 +93,30 @@ bool Init_Game() {
 }
 
 bool Init_FirstTick() {
-    player.pos.x = 0;
-    player.pos.y = 0;
-    player.rotation = 0;
-    player.mass = 30;
+    PLAYER_ENTITY.pos.x = 0;
+    PLAYER_ENTITY.pos.y = 0;
+    PLAYER_ENTITY.mass = 10;
 
-    player.type = PLAYER;
+    PLAYER_ENTITY.type = PLAYER;
 
-    player.square_hitbox_cornerpos.x = -15;
-    player.square_hitbox_cornerpos.y = -15;
-    player.hitbox_dimensions.x = 30;
-    player.hitbox_dimensions.y = 30;
+    PLAYER_ENTITY.square_hitbox_cornerpos.x = -10;
+    PLAYER_ENTITY.square_hitbox_cornerpos.y = -10;
+    PLAYER_ENTITY.hitbox_dimensions.x = 20;
+    PLAYER_ENTITY.hitbox_dimensions.y = 20;
 
-    opponent_test.pos.x = 40;
-    opponent_test.pos.y = 0;
-    opponent_test.vel.x = 0;
-    opponent_test.vel.y = 0;
-    opponent_test.mass = 10;
+    num_entities = 200;
+    for(int i = 1; i < num_entities; i++) {
+        entities[i].pos.x = (i * 25) % 600;
+        entities[i].pos.y = (i * 27) % 600;
+        entities[i].vel.x = (i % 10) - 5;
+        entities[i].vel.y = (i % 11) - 5.5;
+        entities[i].mass = 10;
 
-    opponent_test.square_hitbox_cornerpos.x = -10;
-    opponent_test.square_hitbox_cornerpos.y = -10;
-    opponent_test.hitbox_dimensions.x = 20;
-    opponent_test.hitbox_dimensions.y = 20;
-
-    opponent_test2.pos.x = -40;
-    opponent_test2.pos.y = 0;
-    opponent_test2.vel.x = 0;
-    opponent_test2.vel.y = 0;
-    opponent_test2.mass = 10;
-
-    opponent_test2.square_hitbox_cornerpos.x = -10;
-    opponent_test2.square_hitbox_cornerpos.y = -10;
-    opponent_test2.hitbox_dimensions.x = 20;
-    opponent_test2.hitbox_dimensions.y = 20;
-
-    opponent_test.type = STATIC;
+        entities[i].square_hitbox_cornerpos.x = -10;
+        entities[i].square_hitbox_cornerpos.y = -10;
+        entities[i].hitbox_dimensions.x = 20;
+        entities[i].hitbox_dimensions.y = 20;
+    }
 
     return true;
 }
@@ -189,36 +180,31 @@ bool Game_Tick() {
         diag_1byroot2 = BYSQRT2;
     }
     
-    player.vel.x += (player_input.right - player_input.left) * 5.0f * diag_1byroot2;
-    player.vel.y += (player_input.up - player_input.down) * 5.0f * diag_1byroot2;
-    
-    if(player.pos.x > (PLAYABLE_WIDTH / 2) - 10) {
-        player.vel.x = -SDL_fabs(player.vel.x) * 0.8;
-    } else if(player.pos.x < (-PLAYABLE_WIDTH / 2) + 10) {
-        player.vel.x = SDL_fabs(player.vel.x) * 0.8;
-    }
-    
-    if(player.pos.y > (PLAYABLE_HEIGHT / 2) - 10) {
-        player.vel.y = -SDL_fabs(player.vel.y) * 0.8;
-    } else if(player.pos.y < (-PLAYABLE_HEIGHT / 2) + 10) {
-        player.vel.y = SDL_fabs(player.vel.y) * 0.8;
-    }
-
-    Entity_Tick(&player, delta_time);
+    PLAYER_ENTITY.vel.x += (player_input.right - player_input.left) * 5.0f * diag_1byroot2;
+    PLAYER_ENTITY.vel.y += (player_input.up - player_input.down) * 5.0f * diag_1byroot2;
     // ##############################################
     
-    Entity_Tick(&opponent_test, delta_time);
-    Entity_Tick(&opponent_test2, delta_time);
-    if(Physics_Collision(&player, &opponent_test, 0.5)) {
-        SDL_Log("Collision Tested!");
+    for(int i = 0; i < num_entities; i++) {
+        Entity_Tick(&entities[i], delta_time);
+
+        if(entities[i].pos.x > (PLAYABLE_WIDTH / 2) - 10) {
+            entities[i].vel.x = -SDL_fabs(entities[i].vel.x) * 0.8;
+        } else if(entities[i].pos.x < (-PLAYABLE_WIDTH / 2) + 10) {
+            entities[i].vel.x = SDL_fabs(entities[i].vel.x) * 0.8;
+        }
+        
+        if(entities[i].pos.y > (PLAYABLE_HEIGHT / 2) - 10) {
+            entities[i].vel.y = -SDL_fabs(entities[i].vel.y) * 0.8;
+        } else if(entities[i].pos.y < (-PLAYABLE_HEIGHT / 2) + 10) {
+            entities[i].vel.y = SDL_fabs(entities[i].vel.y) * 0.8;
+        }
+        LimitPos(&entities[i].pos, (-PLAYABLE_WIDTH / 2) + 10, (-PLAYABLE_HEIGHT / 2) + 10, (PLAYABLE_WIDTH / 2) - 10, (PLAYABLE_HEIGHT / 2) - 10);
+
+        for(int j = i + 1; j < num_entities; j++) {
+            Translational_Collision(&entities[i], &entities[j]);
+        }
     }
-    if(Physics_Collision(&opponent_test2, &opponent_test, 0.5)) {
-        SDL_Log("Collision-Collision Tested!");
-    }
-    if(Physics_Collision(&player, &opponent_test2, 0.5)) {
-        SDL_Log("Collision2 Tested!");
-    }
-    LimitPos(&camera, player.pos.x - 100, player.pos.y - 100, player.pos.x + 100, player.pos.y + 100);
+    LimitPos(&camera, PLAYER_ENTITY.pos.x - 100, PLAYER_ENTITY.pos.y - 100, PLAYER_ENTITY.pos.x + 100, PLAYER_ENTITY.pos.y + 100);
 
     return true;
 }
@@ -226,36 +212,26 @@ bool Game_Tick() {
 bool Game_Draw() {
     Vector2D onScreen, tmpvec;
     SDL_FRect rect;
-
+    
     // PLAYER #######################################
-    ToOnScreenCoordinate(&onScreen, &player.pos, &camera);
-    rect.x = onScreen.x - 14.5;
-    rect.y = onScreen.y - 14.5;
-    rect.w = 30;
-    rect.h = 30;
+    ToOnScreenCoordinate(&onScreen, &PLAYER_ENTITY.pos, &camera);
+    rect.x = onScreen.x - 9.5;
+    rect.y = onScreen.y - 9.5;
+    rect.w = 20;
+    rect.h = 20;
     MySDL_SetDrawHexColor(0x00ffffff);
     SDL_RenderFillRect(main_renderer, &rect);
     // ##############################################
-
-    // OPPONENT_TEST ################################
-    ToOnScreenCoordinate(&onScreen, &opponent_test.pos, &camera);
-    rect.x = onScreen.x - 9.5;
-    rect.y = onScreen.y - 9.5;
+    
+    MySDL_SetDrawHexColor(0x0000ffff);
     rect.w = 20;
     rect.h = 20;
-    MySDL_SetDrawHexColor(0x0000ffff);
-    SDL_RenderFillRect(main_renderer, &rect);
-    // ##############################################
-
-    // OPPONENT_TEST2 ################################
-    ToOnScreenCoordinate(&onScreen, &opponent_test2.pos, &camera);
-    rect.x = onScreen.x - 9.5;
-    rect.y = onScreen.y - 9.5;
-    rect.w = 20;
-    rect.h = 20;
-    MySDL_SetDrawHexColor(0x0000ffff);
-    SDL_RenderFillRect(main_renderer, &rect);
-    // ##############################################
+    for(int i = 1; i < num_entities; i++) {
+        ToOnScreenCoordinate(&onScreen, &entities[i].pos, &camera);
+        rect.x = onScreen.x - 9.5;
+        rect.y = onScreen.y - 9.5;
+        SDL_RenderFillRect(main_renderer, &rect);
+    }
 
     // PLAY BORDER ##################################
     tmpvec.x = (-PLAYABLE_WIDTH / 2);

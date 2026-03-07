@@ -11,7 +11,6 @@
 typedef enum {
     PLAYER,
     OPPONENT,
-    STATIC,
     HEAL,
     DAMAGE
 } Entity_Type;
@@ -22,7 +21,6 @@ typedef struct {
 
     Vector2D pos;
     Vector2D vel;
-    double rotation;
     double mass;
 
     Vector2D square_hitbox_cornerpos;    // Square hitbox
@@ -30,7 +28,5 @@ typedef struct {
 } Entity;
 
 void Entity_Tick(Entity *entity, double delta_time);
-bool Check_Collision(Entity *e1, Entity *e2);
-bool Physics_Collision(Entity *e1, Entity *e2, double factor);
 
 #endif
