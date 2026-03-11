@@ -1,23 +1,12 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 #include <SDL3_image/SDL_image.h>
+#include "defs.h"
 #include "Entity.h"
 #include "Control.h"
 #include "Vector.h"
 #include "Collisions.h"
-
-#define MAIN_TITLE "SDL Game"
-#define INIT_WIDTH 960
-#define INIT_HEIGHT 530
-#define INIT_BACKCOLOR 0x000000ff
-
-#define SQRT2 1.4142135623730951
-#define BYSQRT2 (1 / SQRT2)
-
-#define ENTITY_LIMIT 500
-#define PLAYABLE_WIDTH 1400
-#define PLAYABLE_HEIGHT 1400
-#define STARS_LIMIT 1000
+#include "Gameplay.h"
 
 SDL_Window *main_window;
 SDL_Renderer *main_renderer;
@@ -30,9 +19,13 @@ int num_entities = 0;
 Entity entities[ENTITY_LIMIT];
 #define PLAYER_ENTITY entities[0]           // First entity is always the PLAYER_ENTITY
 
+int num_bullets = 0;
+Bullet bullets[BULLET_LIMIT];
+
 bool is_running = false;
 double do_frame_delta = 0.008;              // For consistent frame rate (set 0 to remove function)
 double delta_time = 0;                      // Time between game ticks
+double time_passed = 0;                     // Seconds passed since running
 
 bool MySDL_SetDrawHexColor(int hexcode);
 void ToOnScreenCoordinate(Vector2D *out, Vector2D *ingame, Vector2D *camera);
@@ -67,6 +60,7 @@ int main(int argc, char* argv[]) {
         if(do_frame_delta && delta_time < do_frame_delta) {
             SDL_Delay((int)((do_frame_delta - delta_time + 0.0005) * 1000));
             delta_time = do_frame_delta;
+            time_passed += delta_time;
         }
         // ###########################################################
     }
@@ -95,7 +89,7 @@ bool Init_Game() {
 bool Init_FirstTick() {
     PLAYER_ENTITY.pos.x = 0;
     PLAYER_ENTITY.pos.y = 0;
-    PLAYER_ENTITY.mass = 10;
+    PLAYER_ENTITY.mass = 100;
 
     PLAYER_ENTITY.type = PLAYER;
 
@@ -111,6 +105,8 @@ bool Init_FirstTick() {
         entities[i].vel.x = (i % 10) - 5;
         entities[i].vel.y = (i % 11) - 5.5;
         entities[i].mass = 10;
+
+        entities[i].type = OPPONENT;
 
         entities[i].square_hitbox_cornerpos.x = -10;
         entities[i].square_hitbox_cornerpos.y = -10;
@@ -204,6 +200,11 @@ bool Game_Tick() {
             Translational_Collision(&entities[i], &entities[j]);
         }
     }
+
+    for(int i = 0; i < num_bullets; i++) {
+        Bullet_Tick(&bullets[i], delta_time);
+    }
+
     LimitPos(&camera, PLAYER_ENTITY.pos.x - 100, PLAYER_ENTITY.pos.y - 100, PLAYER_ENTITY.pos.x + 100, PLAYER_ENTITY.pos.y + 100);
 
     return true;
@@ -212,26 +213,18 @@ bool Game_Tick() {
 bool Game_Draw() {
     Vector2D onScreen, tmpvec;
     SDL_FRect rect;
-    
-    // PLAYER #######################################
-    ToOnScreenCoordinate(&onScreen, &PLAYER_ENTITY.pos, &camera);
-    rect.x = onScreen.x - 9.5;
-    rect.y = onScreen.y - 9.5;
-    rect.w = 20;
-    rect.h = 20;
-    MySDL_SetDrawHexColor(0x00ffffff);
-    SDL_RenderFillRect(main_renderer, &rect);
+
+    // BULLETS ######################################
+    for(int i = 0; i < num_entities; i++) {
+        Bullet_Draw(main_renderer, &bullets[i], &camera);
+    }
     // ##############################################
     
-    MySDL_SetDrawHexColor(0x0000ffff);
-    rect.w = 20;
-    rect.h = 20;
-    for(int i = 1; i < num_entities; i++) {
-        ToOnScreenCoordinate(&onScreen, &entities[i].pos, &camera);
-        rect.x = onScreen.x - 9.5;
-        rect.y = onScreen.y - 9.5;
-        SDL_RenderFillRect(main_renderer, &rect);
+    // ENTITES ######################################
+    for(int i = 0; i < num_entities; i++) {
+        Entity_Draw(main_renderer, &entities[i], &camera);
     }
+    // ##############################################
 
     // PLAY BORDER ##################################
     tmpvec.x = (-PLAYABLE_WIDTH / 2);

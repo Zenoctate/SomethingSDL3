@@ -1,5 +1,8 @@
 #include "Collisions.h"
 
+#define PI 3.14159265
+#define DEGTORAD (PI / 180)
+
 bool Check_Collision(Entity *e1, Entity *e2) {
     double e1x1 = e1->square_hitbox_cornerpos.x + e1->pos.x;
     double e1x2 = e1->square_hitbox_cornerpos.x + e1->pos.x + e1->hitbox_dimensions.x;
@@ -21,6 +24,7 @@ bool Check_Collision(Entity *e1, Entity *e2) {
     return false;
 }
 
+// Elastic Collision Only
 bool Translational_Collision(Entity *to, Entity *from) {
     if(Check_Collision(to, from)) {
         double angle = SDL_atan2(to->pos.y - from->pos.y, to->pos.x - from->pos.x);
