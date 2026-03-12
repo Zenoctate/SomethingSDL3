@@ -6,17 +6,7 @@
 #include "Vector.h"
 #include "defs.h"
 
-typedef enum {
-    PLAYER,
-    OPPONENT,
-    HEAL,
-    DAMAGE
-} Entity_Type;
-
 typedef struct {
-    int health;
-    Entity_Type type;
-
     Vector2D pos;
     Vector2D vel;
     double mass;
@@ -26,6 +16,5 @@ typedef struct {
 } Entity;
 
 void Entity_Tick(Entity *entity, double delta_time);
-bool Entity_Draw(SDL_Renderer *renderer, Entity *entity, Vector2D *camera);
 
 #endif

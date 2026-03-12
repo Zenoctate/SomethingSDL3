@@ -1,6 +1,9 @@
+#include <stdio.h>
+
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 #include <SDL3_image/SDL_image.h>
+
 #include "defs.h"
 #include "Entity.h"
 #include "Control.h"
@@ -16,7 +19,7 @@ Vector2D camera = {0};
 Player_Input player_input;
 
 int num_entities = 0;
-Entity entities[ENTITY_LIMIT];
+Character entities[ENTITY_LIMIT];
 #define PLAYER_ENTITY entities[0]           // First entity is always the PLAYER_ENTITY
 
 int num_bullets = 0;
@@ -87,31 +90,27 @@ bool Init_Game() {
 }
 
 bool Init_FirstTick() {
-    PLAYER_ENTITY.pos.x = 0;
-    PLAYER_ENTITY.pos.y = 0;
-    PLAYER_ENTITY.mass = 100;
+    PLAYER_ENTITY.entity_struct.pos.x = 0;
+    PLAYER_ENTITY.entity_struct.pos.y = 0;
+    PLAYER_ENTITY.entity_struct.mass = 100;
 
-    PLAYER_ENTITY.type = PLAYER;
-
-    PLAYER_ENTITY.square_hitbox_cornerpos.x = -10;
-    PLAYER_ENTITY.square_hitbox_cornerpos.y = -10;
-    PLAYER_ENTITY.hitbox_dimensions.x = 20;
-    PLAYER_ENTITY.hitbox_dimensions.y = 20;
+    PLAYER_ENTITY.entity_struct.square_hitbox_cornerpos.x = -10;
+    PLAYER_ENTITY.entity_struct.square_hitbox_cornerpos.y = -10;
+    PLAYER_ENTITY.entity_struct.hitbox_dimensions.x = 20;
+    PLAYER_ENTITY.entity_struct.hitbox_dimensions.y = 20;
 
     num_entities = 200;
     for(int i = 1; i < num_entities; i++) {
-        entities[i].pos.x = (i * 25) % 600;
-        entities[i].pos.y = (i * 27) % 600;
-        entities[i].vel.x = (i % 10) - 5;
-        entities[i].vel.y = (i % 11) - 5.5;
-        entities[i].mass = 10;
+        entities[i].entity_struct.pos.x = (i * 25) % 600;
+        entities[i].entity_struct.pos.y = (i * 27) % 600;
+        entities[i].entity_struct.vel.x = (i % 10) - 5;
+        entities[i].entity_struct.vel.y = (i % 11) - 5.5;
+        entities[i].entity_struct.mass = 10;
 
-        entities[i].type = OPPONENT;
-
-        entities[i].square_hitbox_cornerpos.x = -10;
-        entities[i].square_hitbox_cornerpos.y = -10;
-        entities[i].hitbox_dimensions.x = 20;
-        entities[i].hitbox_dimensions.y = 20;
+        entities[i].entity_struct.square_hitbox_cornerpos.x = -10;
+        entities[i].entity_struct.square_hitbox_cornerpos.y = -10;
+        entities[i].entity_struct.hitbox_dimensions.x = 20;
+        entities[i].entity_struct.hitbox_dimensions.y = 20;
     }
 
     return true;
@@ -176,28 +175,33 @@ bool Game_Tick() {
         diag_1byroot2 = BYSQRT2;
     }
     
-    PLAYER_ENTITY.vel.x += (player_input.right - player_input.left) * 5.0f * diag_1byroot2;
-    PLAYER_ENTITY.vel.y += (player_input.up - player_input.down) * 5.0f * diag_1byroot2;
+    PLAYER_ENTITY.entity_struct.vel.x += (player_input.right - player_input.left) * 5.0f * diag_1byroot2;
+    PLAYER_ENTITY.entity_struct.vel.y += (player_input.up - player_input.down) * 5.0f * diag_1byroot2;
+
+    if(player_input.fire && PLAYER_ENTITY.fire_cooldown <= 0) {
+        PLAYER_ENTITY.fire_cooldown = FIRE_COOLDOWN_TIME;
+        Fire_Bullet(&bullets[0], &PLAYER_ENTITY, 2);
+    }
     // ##############################################
     
     for(int i = 0; i < num_entities; i++) {
-        Entity_Tick(&entities[i], delta_time);
+        Character_Tick(&entities[i], delta_time);
 
-        if(entities[i].pos.x > (PLAYABLE_WIDTH / 2) - 10) {
-            entities[i].vel.x = -SDL_fabs(entities[i].vel.x) * 0.8;
-        } else if(entities[i].pos.x < (-PLAYABLE_WIDTH / 2) + 10) {
-            entities[i].vel.x = SDL_fabs(entities[i].vel.x) * 0.8;
+        if(entities[i].entity_struct.pos.x > (PLAYABLE_WIDTH / 2) - 10) {
+            entities[i].entity_struct.vel.x = -SDL_fabs(entities[i].entity_struct.vel.x) * 0.8;
+        } else if(entities[i].entity_struct.pos.x < (-PLAYABLE_WIDTH / 2) + 10) {
+            entities[i].entity_struct.vel.x = SDL_fabs(entities[i].entity_struct.vel.x) * 0.8;
         }
         
-        if(entities[i].pos.y > (PLAYABLE_HEIGHT / 2) - 10) {
-            entities[i].vel.y = -SDL_fabs(entities[i].vel.y) * 0.8;
-        } else if(entities[i].pos.y < (-PLAYABLE_HEIGHT / 2) + 10) {
-            entities[i].vel.y = SDL_fabs(entities[i].vel.y) * 0.8;
+        if(entities[i].entity_struct.pos.y > (PLAYABLE_HEIGHT / 2) - 10) {
+            entities[i].entity_struct.vel.y = -SDL_fabs(entities[i].entity_struct.vel.y) * 0.8;
+        } else if(entities[i].entity_struct.pos.y < (-PLAYABLE_HEIGHT / 2) + 10) {
+            entities[i].entity_struct.vel.y = SDL_fabs(entities[i].entity_struct.vel.y) * 0.8;
         }
-        LimitPos(&entities[i].pos, (-PLAYABLE_WIDTH / 2) + 10, (-PLAYABLE_HEIGHT / 2) + 10, (PLAYABLE_WIDTH / 2) - 10, (PLAYABLE_HEIGHT / 2) - 10);
+        LimitPos(&entities[i].entity_struct.pos, (-PLAYABLE_WIDTH / 2) + 10, (-PLAYABLE_HEIGHT / 2) + 10, (PLAYABLE_WIDTH / 2) - 10, (PLAYABLE_HEIGHT / 2) - 10);
 
         for(int j = i + 1; j < num_entities; j++) {
-            Translational_Collision(&entities[i], &entities[j]);
+            Translational_Collision(&entities[i].entity_struct, &entities[j].entity_struct);
         }
     }
 
@@ -205,7 +209,7 @@ bool Game_Tick() {
         Bullet_Tick(&bullets[i], delta_time);
     }
 
-    LimitPos(&camera, PLAYER_ENTITY.pos.x - 100, PLAYER_ENTITY.pos.y - 100, PLAYER_ENTITY.pos.x + 100, PLAYER_ENTITY.pos.y + 100);
+    LimitPos(&camera, PLAYER_ENTITY.entity_struct.pos.x - 100, PLAYER_ENTITY.entity_struct.pos.y - 100, PLAYER_ENTITY.entity_struct.pos.x + 100, PLAYER_ENTITY.entity_struct.pos.y + 100);
 
     return true;
 }
@@ -215,14 +219,14 @@ bool Game_Draw() {
     SDL_FRect rect;
 
     // BULLETS ######################################
-    for(int i = 0; i < num_entities; i++) {
+    for(int i = 0; i < 1; i++) {
         Bullet_Draw(main_renderer, &bullets[i], &camera);
     }
     // ##############################################
     
     // ENTITES ######################################
     for(int i = 0; i < num_entities; i++) {
-        Entity_Draw(main_renderer, &entities[i], &camera);
+        Character_Draw(main_renderer, &entities[i], &camera);
     }
     // ##############################################
 

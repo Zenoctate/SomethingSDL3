@@ -5,16 +5,32 @@
 #include "Entity.h"
 #include "Control.h"
 
+typedef enum {
+    PLAYER,
+    OPPONENT,
+    ALLY
+} Character_Type;
+
+typedef struct {
+    Entity entity_struct;
+    Character_Type type;
+
+    double fire_cooldown;            // Time left it can fire bullet again in seconds
+    int health;
+} Character;
+
 typedef struct {
     Entity entity_struct;
     double time_alive;               // Max time it can exist in seconds
-    Entity* spawned_by;
+    Character* spawned_by;
 } Bullet;
 
-void Create_Bullet(Bullet *bullet, Entity *entity, double time_alive);
+void Character_Tick(Character *character, double delta_time);
+void Character_Draw(SDL_Renderer *renderer, Character *character,  Vector2D *camera);
+
 void Bullet_Tick(Bullet *bullet, double delta_time);
 void Bullet_Draw(SDL_Renderer *renderer, Bullet *bullet,  Vector2D *camera);
 
-void Player_Input_Handle(Player_Input *pi);
+void Fire_Bullet(Bullet *bullet, Character *by_character, double time_alive);
 
 #endif
