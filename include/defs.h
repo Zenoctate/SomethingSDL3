@@ -6,8 +6,13 @@
 #define INIT_HEIGHT 1000
 #define INIT_BACKCOLOR 0x000000ff
 
+#define DO_FRAME_DELTA 0.008                // For consistent frame rate (set 0 to remove function)
+
 #define SQRT2 1.4142135623730951
 #define BYSQRT2 (1 / SQRT2)
+
+#define PI 3.14159265
+#define DEGTORAD (PI / 180)
 
 #define ENTITY_LIMIT 500
 #define BULLET_LIMIT 500

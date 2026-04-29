@@ -2,6 +2,7 @@
 #define CONTROL
 
 #include <stdbool.h>
+#include "Vector.h"
 
 typedef struct {
     bool up;
@@ -9,6 +10,8 @@ typedef struct {
     bool left;
     bool right;
     bool fire;
+
+    // Vector2D mouse_pos;
 } Player_Input;
 
 #endif

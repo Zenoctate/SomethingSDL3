@@ -10,5 +10,5 @@ add_subdirectory(vendored/SDL_image EXCLUDE_FROM_ALL)   # SDL_image
 
 include_directories(include/)
 
-add_executable(simple_sdl entry.c src/Entity.c src/Vector.c src/Control.c src/Collisions.c src/Statics.c src/Gameplay.c)
+add_executable(simple_sdl entry.c src/Vector.c src/Control.c src/Gameplay.c lib/SDL_Stuff.c)
 target_link_libraries(simple_sdl PRIVATE SDL3::SDL3 SDL3_image::SDL3_image)
